@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>Pro Downloader</title>
+<style>
+  :root{
+    --bg:#191919;
+    --text:#f7f7f7;
+    --success:#30c75b;
+    --success-soft:rgba(48,199,91,.15);
+    --danger:#d82222;
+    --danger-soft:rgba(216,34,34,.15);
+    --sidebar:rgba(20,20,20,.72);
+    --card:rgba(255,255,255,.045);
+    --card-hover:rgba(255,255,255,.07);
+    --field:rgba(255,255,255,.06);
+    --border:rgba(255,255,255,.09);
+    --subtext:rgba(247,247,247,.55);
+    --radius-lg:16px;
+    --radius-md:12px;
+    --radius-sm:8px;
+  }
+  [data-theme="light"]{
+    --bg:#f2f2f2;
+    --text:#191919;
+    --sidebar:rgba(255,255,255,.75);
+    --card:rgba(0,0,0,.035);
+    --card-hover:rgba(0,0,0,.06);
+    --field:rgba(0,0,0,.045);
+    --border:rgba(0,0,0,.09);
+    --subtext:rgba(25,25,25,.55);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg); color:var(--text);
+    font-family:'Segoe UI Variable', 'Segoe UI', Tahoma, Arial, sans-serif;
+    overflow:hidden;
+  }
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; }
+
+  #particles-bg{ position:fixed; top:0; right:0; bottom:0; left:0; z-index:0; background:var(--bg); transition:background .25s ease; }
+  #particles-bg canvas{ position:absolute; top:0; right:0; bottom:0; left:0; width:100%; height:100%; }
+
+  .app-shell{ position:relative; z-index:1; display:flex; height:100vh; }
+
+  /* ================= Sidebar ================= */
+  .sidebar{
+    width:230px; flex:none;
+    background:var(--sidebar);
+    backdrop-filter:blur(24px);
+    -webkit-backdrop-filter:blur(24px);
+    border-left:1px solid var(--border);
+    display:flex; flex-direction:column;
+    padding:22px 14px;
+  }
+  .logo-block{ display:flex; align-items:center; gap:10px; padding:0 8px 26px; }
+  .logo-mark{
+    width:38px; height:38px; border-radius:11px; flex:none;
+    background:linear-gradient(135deg, var(--success), #1f9e46);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand-name{ font-size:15px; font-weight:600; letter-spacing:.2px; }
+
+  nav{ display:flex; flex-direction:column; gap:4px; }
+  .nav-item{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 14px; border-radius:var(--radius-sm);
+    background:transparent; border:none; color:var(--subtext);
+    font-size:13.5px; font-family:inherit; cursor:pointer; text-align:right;
+    transition:background .15s ease, color .15s ease;
+  }
+  .nav-item svg{ width:18px; height:18px; flex:none; }
+  .nav-item:hover{ background:var(--card-hover); color:var(--text); }
+  .nav-item.active{ background:var(--success-soft); color:var(--success); font-weight:600; }
+
+  .sidebar-footer{ margin-top:auto; padding:10px 12px; font-size:11px; color:var(--subtext); }
+
+  /* ================= Content ================= */
+  .content{ flex:1; overflow-y:auto; padding:34px 40px; }
+  .view{ display:none; max-width:840px; margin:0 auto; animation:fadeIn .2s ease; }
+  .view.active{ display:block; }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
+
+  h1{ font-size:24px; margin:0 0 4px; font-weight:700; }
+  .subtitle{ color:var(--subtext); font-size:13.5px; margin:0 0 26px; }
+
+  .card{
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:22px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  }
+
+  /* ---- Home ---- */
+  .url-input-row{ display:flex; gap:10px; }
+  .url-input-row input{
+    flex:1; background:var(--field); border:1px solid var(--border);
+    color:var(--text); border-radius:var(--radius-md); padding:13px 16px;
+    font-size:14px; font-family:inherit;
+  }
+  .url-input-row input:focus{ outline:none; border-color:var(--success); }
+  .url-input-row input::placeholder{ color:var(--subtext); }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:none; border-radius:var(--radius-md); cursor:pointer;
+    background:var(--field); color:var(--text); font-family:inherit;
+    padding:12px 18px; font-size:13.5px; font-weight:500;
+    transition:background .15s ease, transform .05s ease;
+    border:1px solid var(--border);
+  }
+  .btn:hover{ background:var(--card-hover); }
+  .btn:active{ transform:scale(.97); }
+  .btn svg{ width:16px; height:16px; }
+
+  .btn-primary{
+    background:var(--success); color:#0c1f10; border:none; font-weight:700;
+  }
+  .btn-primary:hover{ background:#38dd67; }
+
+  .options-row{ display:flex; gap:12px; margin-top:14px; }
+  .select-wrap{ position:relative; flex:1; }
+  .select-wrap select{
+    width:100%; appearance:none; -webkit-appearance:none;
+    background:var(--field); border:1px solid var(--border); color:var(--text);
+    border-radius:var(--radius-md); padding:12px 40px 12px 16px; font-size:13.5px;
+    font-family:inherit; cursor:pointer;
+  }
+  .select-wrap svg{
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; color:var(--subtext); pointer-events:none;
+  }
+  .options-row .btn-primary{ flex:none; min-width:170px; padding:12px 22px; }
+
+  .progress-box{
+    margin-top:14px; font-size:12.5px; color:var(--success);
+    background:var(--field); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:10px 14px; display:none;
+  }
+  .progress-box.show{ display:block; }
+  .progress-box.error{ color:var(--danger); }
+  .progress-bar-track{
+    margin-top:8px; height:4px; border-radius:4px; background:var(--border); overflow:hidden;
+  }
+  .progress-bar-fill{ height:100%; background:var(--success); width:0%; transition:width .2s ease; }
+
+  .recent-downloads{ margin-top:30px; }
+  .recent-downloads h3{ font-size:13px; color:var(--subtext); font-weight:600; margin:0 0 12px; }
+  .recent-list{ display:flex; flex-direction:column; gap:10px; }
+  .recent-item{
+    display:flex; align-items:center; gap:12px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:10px 14px;
+  }
+  .thumb{
+    width:56px; height:38px; border-radius:8px; flex:none;
+    background:linear-gradient(135deg,#333,#1c1c1c);
+    display:flex; align-items:center; justify-content:center; color:var(--subtext);
+  }
+  .recent-info{ flex:1; min-width:0; }
+  .recent-title{ font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .recent-meta{ font-size:11px; color:var(--subtext); margin-top:2px; direction:ltr; text-align:right; unicode-bidi:isolate; }
+  .status-pill{
+    font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; flex:none;
+  }
+  .status-pill.success{ background:var(--success-soft); color:var(--success); }
+  .status-pill.failed{ background:var(--danger-soft); color:var(--danger); }
+
+  /* ---- History ---- */
+  .history-list{ display:flex; flex-direction:column; gap:10px; }
+  .history-item{
+    display:flex; align-items:center; gap:14px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:12px 16px;
+  }
+  .platform-badge{
+    width:34px; height:34px; border-radius:10px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; color:#fff;
+  }
+  .platform-badge.yt{ background:#e0342c; }
+  .platform-badge.tt{ background:#1c1c1c; border:1px solid #444; }
+  .platform-badge.fb{ background:#1877f2; }
+  .platform-badge.ig{ background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af); }
+
+  .history-thumb{
+    width:64px; height:44px; border-radius:8px; flex:none;
+    background:linear-gradient(135deg,#333,#1c1c1c);
+  }
+  .history-info{ flex:1; min-width:0; }
+  .history-title{ font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .history-meta{ font-size:11.5px; color:var(--subtext); margin-top:3px; display:flex; gap:10px; direction:ltr; justify-content:flex-end; }
+
+  .retry-btn{
+    font-size:12px; padding:7px 14px; border-radius:20px;
+    background:var(--danger-soft); color:var(--danger); border:none; cursor:pointer;
+    font-family:inherit; font-weight:600;
+  }
+  .retry-btn:hover{ background:rgba(216,34,34,.25); }
+
+  /* ---- Settings ---- */
+  .settings-card{ display:flex; flex-direction:column; }
+  .setting-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 4px; border-bottom:1px solid var(--border);
+  }
+  .setting-row:last-child{ border-bottom:none; }
+  .setting-label{ font-size:14px; font-weight:500; }
+  .setting-desc{ font-size:12px; color:var(--subtext); margin-top:3px; }
+
+  .segmented{
+    display:flex; background:var(--field); border:1px solid var(--border);
+    border-radius:20px; padding:3px; gap:2px;
+  }
+  .segmented button{
+    border:none; background:transparent; color:var(--subtext); font-family:inherit;
+    font-size:12.5px; padding:7px 16px; border-radius:18px; cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .segmented button.active{ background:var(--success); color:#0c1f10; font-weight:700; }
+
+  .switch{ position:relative; width:44px; height:26px; flex:none; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch-track{
+    position:absolute; top:0; right:0; bottom:0; left:0; background:var(--field); border:1px solid var(--border);
+    border-radius:20px; cursor:pointer; transition:background .2s ease;
+  }
+  .switch-track::before{
+    content:''; position:absolute; width:18px; height:18px; border-radius:50%;
+    background:var(--text); top:3px; right:3px; transition:transform .2s ease;
+  }
+  .switch input:checked + .switch-track{ background:var(--success); border-color:var(--success); }
+  .switch input:checked + .switch-track::before{ transform:translateX(-18px); background:#0c1f10; }
+
+  .path-row{ display:flex; gap:8px; align-items:center; }
+  .path-display{
+    background:var(--field); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:9px 14px; font-size:12px; color:var(--subtext); min-width:220px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; direction:ltr; text-align:left;
+  }
+</style>
+</head>
+<body>
+
+<div id="particles-bg"><canvas id="particlesCanvas"></canvas></div>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="logo-block">
+      <div class="logo-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3v11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M7 10l5 5 5-5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9.5 15.5 15 19l-5.5 3.2v-6.7Z" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="brand-name">Pro Downloader</div>
+    </div>
+
+    <nav>
+      <button class="nav-item active" data-view="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
+        <span data-i18n="nav.home">الرئيسية</span>
+      </button>
+      <button class="nav-item" data-view="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l4 2"/></svg>
+        <span data-i18n="nav.history">السجل</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z"/></svg>
+        <span data-i18n="nav.settings">الإعدادات</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">Pro Downloader v1.0</div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ===================== Home ===================== -->
+    <section id="view-home" class="view active">
+      <h1 data-i18n="home.title">حمّل أي فيديو بأعلى جودة</h1>
+      <p class="subtitle" data-i18n="home.subtitle">يدعم يوتيوب، تيك توك، فيسبوك، وإنستغرام — حتى دقة 8K</p>
+
+      <div class="card">
+        <div class="url-input-row">
+          <input type="text" id="urlInput" data-i18n-placeholder="home.urlPlaceholder" placeholder="الصقي رابط الفيديو هنا..." />
+          <button class="btn" id="pasteBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+            <span data-i18n="home.paste">لصق الرابط</span>
+          </button>
+        </div>
+        <div class="options-row">
+          <div class="select-wrap">
+            <select id="qualitySelect">
+              <option value="8k">8K (4320p)</option>
+              <option value="4k">4K (2160p)</option>
+              <option value="2k">2K (1440p)</option>
+              <option value="1080" selected>1080p Full HD</option>
+              <option value="720">720p HD</option>
+              <option value="480">480p</option>
+              <option value="audio" data-i18n="home.audioOnly">صوت فقط (MP3)</option>
+            </select>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <button class="btn btn-primary" id="downloadBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v11"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            <span data-i18n="home.downloadNow">تحميل الآن</span>
+          </button>
+        </div>
+        <div class="progress-box" id="progressBox">
+          <div id="progressText"></div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="progressBarFill"></div></div>
+        </div>
+      </div>
+
+      <div class="recent-downloads">
+        <h3 data-i18n="home.recent">آخر التحميلات</h3>
+        <div class="recent-list" id="recentList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== History ===================== -->
+    <section id="view-history" class="view">
+      <h1 data-i18n="history.title">سجل التحميلات</h1>
+      <p class="subtitle" data-i18n="history.subtitle">كل الفيديوهات اللي حمّلتيها من قبل</p>
+
+      <div class="history-list" id="historyList"></div>
+    </section>
+
+    <!-- ===================== Settings ===================== -->
+    <section id="view-settings" class="view">
+      <h1 data-i18n="settings.title">الإعدادات</h1>
+      <p class="subtitle" data-i18n="settings.subtitle">خصّصي البرنامج زي ما يريحك</p>
+
+      <div class="card settings-card">
+        <div class="setting-row">
+          <div>
+            <div class="setting-label" data-i18n="settings.language">اللغة</div>
+            <div class="setting-desc" data-i18n="settings.languageDesc">لغة عرض البرنامج</div>
+          </div>
+          <div class="segmented" id="langSwitch">
+            <button class="active" data-lang="ar">العربية</button>
+            <button data-lang="en">English</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-label" data-i18n="settings.darkMode">الوضع الداكن</div>
+            <div class="setting-desc" data-i18n="settings.darkModeDesc">بدّلي بين الوضع الداكن والفاتح</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle" checked />
+            <span class="switch-track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-label" data-i18n="settings.savePath">مسار الحفظ</div>
+            <div class="setting-desc" data-i18n="settings.savePathDesc">مكان حفظ الفيديوهات على جهازك</div>
+          </div>
+          <div class="path-row">
+            <div class="path-display" id="pathDisplay">C:\Users\Downloads\ProDownloader</div>
+            <button class="btn" id="browseBtn" data-i18n="settings.browse">استعراض...</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const el = (id) => document.getElementById(id);
+
+  // ============ خلفية النقاط المتحركة ============
+  const canvas = document.getElementById("particlesCanvas");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+  let W = 0, H = 0;
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  function initParticles(){
+    const count = Math.floor((W * H) / 22000);
+    particles = [];
+    for(let i=0;i<count;i++){
+      particles.push({
+        x: Math.random()*W,
+        y: Math.random()*H,
+        r: Math.random()*1.6 + 0.6,
+        vx: (Math.random()-0.5)*0.15,
+        vy: (Math.random()-0.5)*0.15,
+        a: Math.random()*0.5 + 0.15,
+      });
+    }
+  }
+  initParticles();
+  window.addEventListener("resize", initParticles);
+
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of particles){
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0) p.x = W; if(p.x > W) p.x = 0;
+      if(p.y < 0) p.y = H; if(p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ============ الحالة العامة ============
+  const state = {
+    history: [],
+    settings: {language:"ar", theme:"dark", save_path:""},
+    busy: false,
+  };
+
+  const PLATFORM_BADGE = {yt:"YT", tt:"TT", fb:"FB", ig:"IG"};
+  const PLATFORM_LABEL = {yt:"YouTube", tt:"TikTok", fb:"Facebook", ig:"Instagram"};
+  const QUALITY_LABEL = {
+    "8k":"8K", "4k":"4K", "2k":"2K", "1080":"1080p", "720":"720p", "480":"480p", "audio":"MP3",
+  };
+
+  // ============ التنقل بين الشاشات ============
+  document.querySelectorAll(".nav-item").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      const view = btn.dataset.view;
+      document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+      el("view-" + view).classList.add("active");
+    });
+  });
+
+  // ============ جاهزية pywebview ============
+  function whenReady(){
+    return new Promise((resolve)=>{
+      if(window.pywebview && window.pywebview.api) return resolve();
+      window.addEventListener("pywebviewready", ()=> resolve());
+    });
+  }
+
+  async function init(){
+    await whenReady();
+    let boot = {settings: state.settings, history: [], qualities: []};
+    try{ boot = await window.pywebview.api.get_bootstrap(); }catch(e){}
+    state.settings = boot.settings || state.settings;
+    state.history = boot.history || [];
+
+    applyLang(state.settings.language || "ar");
+    document.querySelectorAll("#langSwitch button").forEach(b=>{
+      b.classList.toggle("active", b.dataset.lang === state.settings.language);
+    });
+    const isDark = state.settings.theme !== "light";
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    el("themeToggle").checked = isDark;
+    el("pathDisplay").textContent = state.settings.save_path || "";
+
+    renderHistory();
+    renderRecent();
+  }
+
+  function toast(msg, isError){
+    const pb = el("progressBox");
+    pb.classList.add("show");
+    pb.classList.toggle("error", !!isError);
+    el("progressText").textContent = msg;
+    if(isError){
+      setTimeout(()=>{ if(!state.busy) pb.classList.remove("show"); }, 4000);
+    }
+  }
+
+  // ============ رسم السجل ============
+  function historyRowHtml(item){
+    const badge = PLATFORM_BADGE[item.platform] || "?";
+    const platformClass = item.platform || "";
+    const qualityLabel = QUALITY_LABEL[item.quality] || item.quality || "";
+    let statusHtml;
+    if(item.status === "success"){
+      statusHtml = `<div class="status-pill success" data-i18n="status.success">Success</div>`;
+    } else if(item.status === "failed"){
+      statusHtml = `<div style="display:flex; align-items:center; gap:8px;">
+          <div class="status-pill failed" data-i18n="status.failed">Failed</div>
+          <button class="retry-btn" data-id="${item.id}" data-i18n="status.retry">إعادة المحاولة</button>
+        </div>`;
+    } else {
+      statusHtml = `<div class="status-pill" style="background:var(--field); color:var(--subtext);">…</div>`;
+    }
+    return `
+      <div class="platform-badge ${platformClass}">${badge}</div>
+      <div class="history-thumb"></div>
+      <div class="history-info">
+        <div class="history-title">${escapeHtml(item.title || item.url)}</div>
+        <div class="history-meta">
+          <span>${item.date || ""}</span><span>${item.size || "—"}</span><span>${qualityLabel}</span>
+        </div>
+      </div>
+      ${statusHtml}
+    `;
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function renderHistory(){
+    const list = el("historyList");
+    list.innerHTML = "";
+    if(state.history.length === 0){
+      list.innerHTML = '<div class="empty-list" style="color:var(--subtext); text-align:center; padding:30px;">لا توجد تحميلات بعد</div>';
+      return;
+    }
+    state.history.forEach(item=>{
+      const row = document.createElement("div");
+      row.className = "history-item";
+      row.dataset.id = item.id;
+      row.innerHTML = historyRowHtml(item);
+      const retryBtn = row.querySelector(".retry-btn");
+      if(retryBtn){
+        retryBtn.addEventListener("click", ()=> retryDownload(item.id));
+      }
+      list.appendChild(row);
+    });
+  }
+
+  function renderRecent(){
+    const list = el("recentList");
+    list.innerHTML = "";
+    const recent = state.history.slice(0, 2);
+    if(recent.length === 0){
+      list.innerHTML = '<div style="color:var(--subtext); font-size:12.5px;">لسه معملتيش أي تحميل</div>';
+      return;
+    }
+    recent.forEach(item=>{
+      const row = document.createElement("div");
+      row.className = "recent-item";
+      const statusHtml = item.status === "success"
+        ? `<div class="status-pill success" data-i18n="status.success">Success</div>`
+        : item.status === "failed"
+          ? `<div class="status-pill failed" data-i18n="status.failed">Failed</div>`
+          : `<div class="status-pill" style="background:var(--field); color:var(--subtext);">…</div>`;
+      row.innerHTML = `
+        <div class="thumb">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        </div>
+        <div class="recent-info">
+          <div class="recent-title">${escapeHtml(item.title || item.url)}</div>
+          <div class="recent-meta">${PLATFORM_LABEL[item.platform] || ""} · ${QUALITY_LABEL[item.quality] || ""} · ${item.size || "—"}</div>
+        </div>
+        ${statusHtml}
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function findHistoryIndex(id){
+    return state.history.findIndex(h => h.id === id);
+  }
+
+  // ============ لصق الرابط ============
+  el("pasteBtn").addEventListener("click", async ()=>{
+    try{
+      const text = await window.pywebview.api.paste_clipboard();
+      if(text) el("urlInput").value = text;
+    }catch(e){ /* تجاهل بهدوء */ }
+  });
+
+  // ============ بدء التحميل ============
+  el("downloadBtn").addEventListener("click", async ()=>{
+    if(state.busy){ toast("في تحميل شغال دلوقتي، استني لحد ما يخلص.", true); return; }
+    const url = el("urlInput").value.trim();
+    const quality = el("qualitySelect").value;
+    if(!url){ toast("حطي رابط الفيديو الأول.", true); return; }
+
+    el("progressBox").classList.add("show");
+    el("progressBox").classList.remove("error");
+    el("progressText").textContent = "جارٍ البدء...";
+    el("progressBarFill").style.width = "0%";
+
+    try{
+      await window.pywebview.api.start_download(url, quality);
+    }catch(e){
+      toast("حصل خطأ أثناء بدء التحميل.", true);
+    }
+  });
+
+  function retryDownload(id){
+    if(state.busy){ toast("في تحميل شغال دلوقتي، استني لحد ما يخلص.", true); return; }
+    window.pywebview.api.retry_download(id).catch(()=>{});
+  }
+
+  // ============ ردود الفعل القادمة من بايثون ============
+  window.onDownloadStarted = function(entry){
+    state.busy = true;
+    el("downloadBtn").disabled = true;
+    const idx = findHistoryIndex(entry.id);
+    if(idx === -1) state.history.unshift(entry);
+    renderHistory();
+    renderRecent();
+  };
+
+  window.onDownloadProgress = function(data){
+    el("progressBox").classList.add("show");
+    el("progressBox").classList.remove("error");
+    el("progressText").textContent = data.message || "";
+    if(typeof data.percent === "number" && !isNaN(data.percent)){
+      el("progressBarFill").style.width = Math.max(0, Math.min(100, data.percent)) + "%";
+    }
+  };
+
+  window.onDownloadFinished = function(entry){
+    state.busy = false;
+    el("downloadBtn").disabled = false;
+    const idx = findHistoryIndex(entry.id);
+    if(idx !== -1) state.history[idx] = entry; else state.history.unshift(entry);
+    renderHistory();
+    renderRecent();
+
+    if(entry.status === "success"){
+      el("progressBox").classList.remove("error");
+      el("progressText").textContent = "تم التحميل بنجاح ✓".replace("✓", "");
+      el("progressBarFill").style.width = "100%";
+      el("urlInput").value = "";
+      setTimeout(()=> el("progressBox").classList.remove("show"), 3000);
+    } else {
+      el("progressBox").classList.add("error");
+      el("progressText").textContent = "فشل التحميل: " + (entry.error || "");
+    }
+  };
+
+  window.onDownloadError = function(payload){
+    state.busy = false;
+    el("downloadBtn").disabled = false;
+    toast(payload.message || "حصل خطأ غير متوقع.", true);
+  };
+
+  // ============ تبديل الوضع الداكن/الفاتح ============
+  el("themeToggle").addEventListener("change", (ev)=>{
+    const theme = ev.target.checked ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", theme);
+    state.settings.theme = theme;
+    window.pywebview.api.save_settings_api({theme}).catch(()=>{});
+  });
+
+  // ============ تبديل اللغة ============
+  const STRINGS = {
+    ar: {
+      "nav.home":"الرئيسية", "nav.history":"السجل", "nav.settings":"الإعدادات",
+      "home.title":"حمّل أي فيديو بأعلى جودة",
+      "home.subtitle":"يدعم يوتيوب، تيك توك، فيسبوك، وإنستغرام — حتى دقة 8K",
+      "home.urlPlaceholder":"الصقي رابط الفيديو هنا...",
+      "home.paste":"لصق الرابط", "home.downloadNow":"تحميل الآن", "home.recent":"آخر التحميلات",
+      "home.audioOnly":"صوت فقط (MP3)",
+      "history.title":"سجل التحميلات", "history.subtitle":"كل الفيديوهات اللي حمّلتيها من قبل",
+      "settings.title":"الإعدادات", "settings.subtitle":"خصّصي البرنامج زي ما يريحك",
+      "settings.language":"اللغة", "settings.languageDesc":"لغة عرض البرنامج",
+      "settings.darkMode":"الوضع الداكن", "settings.darkModeDesc":"بدّلي بين الوضع الداكن والفاتح",
+      "settings.savePath":"مسار الحفظ", "settings.savePathDesc":"مكان حفظ الفيديوهات على جهازك",
+      "settings.browse":"استعراض...",
+      "status.success":"Success", "status.failed":"Failed", "status.retry":"إعادة المحاولة",
+    },
+    en: {
+      "nav.home":"Home", "nav.history":"History", "nav.settings":"Settings",
+      "home.title":"Download any video in top quality",
+      "home.subtitle":"Supports YouTube, TikTok, Facebook, and Instagram — up to 8K",
+      "home.urlPlaceholder":"Paste the video URL here...",
+      "home.paste":"Paste URL", "home.downloadNow":"Download Now", "home.recent":"Recent Downloads",
+      "home.audioOnly":"Audio only (MP3)",
+      "history.title":"Download History", "history.subtitle":"Everything you've downloaded so far",
+      "settings.title":"Settings", "settings.subtitle":"Customize the app your way",
+      "settings.language":"Language", "settings.languageDesc":"App display language",
+      "settings.darkMode":"Dark Mode", "settings.darkModeDesc":"Switch between dark and light mode",
+      "settings.savePath":"Save Location", "settings.savePathDesc":"Where videos are saved on your device",
+      "settings.browse":"Browse...",
+      "status.success":"Success", "status.failed":"Failed", "status.retry":"Retry",
+    },
+  };
+
+  function applyLang(lang){
+    document.documentElement.setAttribute("lang", lang);
+    document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    document.querySelectorAll("[data-i18n]").forEach(elm=>{
+      const key = elm.getAttribute("data-i18n");
+      if(STRINGS[lang][key]) elm.textContent = STRINGS[lang][key];
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(elm=>{
+      const key = elm.getAttribute("data-i18n-placeholder");
+      if(STRINGS[lang][key]) elm.setAttribute("placeholder", STRINGS[lang][key]);
+    });
+  }
+
+  document.querySelectorAll("#langSwitch button").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll("#langSwitch button").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      applyLang(btn.dataset.lang);
+      state.settings.language = btn.dataset.lang;
+      window.pywebview.api.save_settings_api({language: btn.dataset.lang}).catch(()=>{});
+    });
+  });
+
+  // ============ اختيار مسار الحفظ ============
+  el("browseBtn").addEventListener("click", async ()=>{
+    try{
+      const path = await window.pywebview.api.pick_folder();
+      if(path){
+        el("pathDisplay").textContent = path;
+        state.settings.save_path = path;
+      }
+    }catch(e){ /* تجاهل بهدوء */ }
+  });
+
+  init();
+
+})();
+</script>
+</body>
+</html>
